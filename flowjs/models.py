@@ -117,13 +117,13 @@ class FlowFile(models.Model):
         """
         Join all the chucks in one file
         """
-        if self.state == self.STATE_UPLOADING and self.total_chunks_uploaded == self.total_chunks:
+        if self.state !=    self.STATE_COMPLETED and self.total_chunks_uploaded == self.total_chunks:
             if self.join_in_background:
                 self.state = self.STATE_JOINING
                 super(FlowFile, self).save()
                 if FLOWJS_WITH_CELERY:
                     from tasks import join_chunks_task
-                    join_chunks_task.delay(self)
+                    join_chunks_task.delay(self.identifier)
                 else:
                     t = threading.Thread(target=self._join_chunks)
                     t.setDaemon(True)
@@ -158,8 +158,8 @@ class FlowFile(models.Model):
 
     def delete_chunks(self):
         if FLOWJS_WITH_CELERY:
-            from tasks import delete_chunks_task
-            delete_chunks_task.delay(self)
+            from .tasks import delete_chunks_task
+            delete_chunks_task.delay(self.identifier)
         else:
             t = threading.Thread(target=self._delete_chunks)
             t.setDaemon(True)
