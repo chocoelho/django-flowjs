@@ -60,6 +60,10 @@ class UploadView(View):
             'file': form.cleaned_data['file'],
         })
 
+        if not created:
+            chunk.file = form.cleaned_data['file']
+            chunk.save()
+
         return http.HttpResponse(flow_file.identifier)
 
 
